@@ -85,14 +85,14 @@ example:
 
 ### Kernelized Support Vector Machines
 1. ####  SVC (SupportVectormachinesClassifier)
-* `C`: regularization parameter. the same as in LinearSVC. higher value reduces complexity and a lower value makes the model more sensitive.
-* `kernel`: kernel in support vector machine is the algorithm of transformation into higher dimensional space. `ploy` is limited by the `degree` parameter. `rbf` (radial basis function) considers all possible polynomials.
-*  `gamma` next to C, gamma is the most important parameter in SVM. a higher gamma makes the model more sensitive to individual data points.
-* more kernel specific hyperparameters
+	* `C`: regularization parameter. the same as in LinearSVC. higher value reduces complexity and a lower value makes the model more sensitive.
+	* `kernel`: kernel in support vector machine is the algorithm of transformation into higher dimensional space. `ploy` is limited by the `degree` parameter. `rbf` (radial basis function) considers all possible polynomials.
+	*  `gamma` next to C, gamma is the most important parameter in SVM. a higher gamma makes the model more sensitive to individual data points.
+	* more kernel specific hyperparameters
 
-	example:
+		example:
 
-	  svc = sklearn.svm.SVC(kernel='rbf', C=200, gamma=.2)
+		  svc = sklearn.svm.SVC(kernel='rbf', C=200, gamma=.2)
 **IMPORTANT NOTES**:
 * SVM often requires hyperparameters tuning.
 * unlike tree based algorithms, they require preprocessing of data. normalizing/standardizing of data is required for good performance.
@@ -176,7 +176,8 @@ In scikit-learn there are two methods to obtain certainty estimates from classif
 	   [1  0  2]
 
 ## Unsupervised learning and Preprocessing
-all scaling functions have the same interface. use `fit` on the training set to find the scaling parameters and then `transform` to scale the data 
+all scaling functions have the same interface. use `fit` on the training set to find the scaling parameters and then `transform` to scale the data
+### Scalers
 1. #### MinMaxScaler
 	* scale the data so that the *Min* == 0 and *Max* == 1
 
@@ -223,7 +224,7 @@ all scaling functions have the same interface. use `fit` on the training set to 
 	***note***: standard scaler is very sensitive to outliers and it doesn't scale the data well when you have extreme values.
 
 3. #### RobustScaler
-	* similar to StandardScaler but uses the median and quantiles instead of the mean and the variance. in the this way it accounts for extreme values.
+	* similar to StandardScaler but uses the median and quantiles instead of the mean and the variance. in this way it accounts for extreme values.
 
 		Syntax:
 
@@ -237,9 +238,50 @@ all scaling functions have the same interface. use `fit` on the training set to 
 		  sklearn.preproccessing.Normalizer().fit_transform(X)
 
 **IMPORTANT NOTES**:
-* testing data should be rescaled using the same scaler that is fitted on the training data.
+* testing data should be rescaled using the same scaler that is fitted on the training data. don't fit again. transform with the fitted model.
 * RobustScaler works better than StandardScaler with extreme value. it's not sensitive to outliers. 
 
+### Dimensionality reduction
+1. #### PCA (Principle Components Analysis)
+	for a dataset with a certain number of numeric features, PCA rotates the dimensional space so that it finds the directions that has the most variation. the direction that has the most variation is always the first component, the direction that has the second most variation is the second component and so on. each component is a mix of original features and consequently the components are difficult to interpret. PCA is typically used to reduce the features so that they can be visualized. it can be used for feature engineering also.
+	
+	important parameters:
+	* `n_components`: number of components to retain.
+	* `whiten`: whether to rescale the data after the transformation. this is the same as using `SandardScaler` after the transformation.
 
-          
+	example:
+	
+	   pca = sklearn.decomposition.PCA(n_components=3)
+	   X_pc = pca.fit_transform(X)
+
+	important attributes:
+	
+	* `.components_`: components as vectors of coefficients of original features
+	* `.explained_variance_ratio_`: percentage of explained variance by each component retained.
+
+	***note***: there always will be a loss of information when using PCA to reduce dimensionality. full information will be captured only if the number of components are equal to the number of features which means that dimensions were not reduced only transformed.
+
+2. #### NMF (Non-negative Matrix Factorization)
+	NMF differs from PCA in that choosing a different `n_components` doesn't just retain components, but a different number completely yields different transformation of the data. unlike PCA the components in NMF has no meaningful order and the components are easier to interpret. NMF is useful to extract original signals from data that is made of of several independent sources.
+	* `n_components`: number of components, unlike PCA different number yields different transformation of data.
+	
+	Example:
+		
+	   nmf = sklearn.decomposition.NMF(n_components=4)
+	   X_nmf = nmf.fit_transform(X)
+
+3. #### TSNE (T-distributed Stochastic Neighbor Embedding)
+	t-SNE is a great algorithm that is mainly used for visualization. beside visualization t-SNE has little use as it can't apply learned transformations on different or new data, only the data it was trained with. it's great for EDA. while PCA often does a good job in reducing dimensionality for visualization, the method has it's downsides. t-SNE projects the points in high dimensional space into 2 or 3 dimensions and tries to preserve the distances between data points as much as possible. the closer the points in the high dimensional space the closer they appear in the new representation and the farther they are the farther they are represented.
+
+	* `n_components`: 2 by default. doesn't make sense to choose more than 3 since the main use is visualization.
+	* `perplexity`: perplexity is related to the number of nearest neighbors that is used in other manifold learning algorithms. Larger datasets usually require a larger perplexity. Consider selecting a value between 5 and 50. Different values can result in significantly different results.
+	* `early_exaggeration`: Controls how tight natural clusters in the original space are in the embedded space and how much space will be between them. For larger values, the space between natural clusters will be larger in the embedded space. The choice of this parameter is not very critical.
+
+	example:
+		
+	   tsne = sklearn.manifold.TSNE(perplexity=50, early_exaggeration=12)
+	   X_tnse = tsne.fit_transform(X)
+	   _ = plt.scatter(X_tsne[:,0], X_tsne[:,1], c=y)
+
+	***note***: t-SNE is a stochastic algorithm. the values of the points are randomly initialized and they don't converge into specific locations in the lower dimensional space. this means that it's very sensitive to the random state.
 
